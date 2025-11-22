@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "society-maintainer",
+    "prod": "urmilakunj-f007c"
+  },
+  "targets": {},
+  "etags": {}
+}
