@@ -27,10 +27,34 @@ jobs:
       - name: Deploy to Firebase Hosting
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          VITE_FB_PROJECT_ID: ${{ secrets.VITE_FB_PROJECT_ID }}
         run: |
-          if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "FIREBASE_TOKEN is not set. Add it as a secret named FIREBASE_TOKEN.";
-            exit 1;
+          set -e
+          # Determine project id: prefer explicit secret, else try service account JSON, else error
+          PROJECT_ID="${VITE_FB_PROJECT_ID:-}"
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "Using service account JSON for auth"
+            echo "$FIREBASE_SERVICE_ACCOUNT" > /tmp/sa.json
+            export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+            if [ -z "$PROJECT_ID" ]; then
+              PROJECT_ID=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/sa.json','utf8')).project_id)")
+            fi
           fi
-          # Use npx to avoid global installs; deploy hosting only
-          npx firebase-tools@latest deploy --only hosting --token "$FIREBASE_TOKEN"
+
+          if [ -n "$PROJECT_ID" ]; then
+            echo "Deploying to Firebase project: $PROJECT_ID"
+          else
+            echo "No project id provided via VITE_FB_PROJECT_ID or service account JSON. Aborting.";
+            exit 1
+          fi
+
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            npx firebase-tools@latest deploy --only hosting --project "$PROJECT_ID"
+          else
+            if [ -z "$FIREBASE_TOKEN" ]; then
+              echo "FIREBASE_TOKEN not set and no service account provided. Add FIREBASE_TOKEN or FIREBASE_SERVICE_ACCOUNT secret.";
+              exit 1
+            fi
+            npx firebase-tools@latest deploy --only hosting --project "$PROJECT_ID" --token "$FIREBASE_TOKEN"
+          fi
