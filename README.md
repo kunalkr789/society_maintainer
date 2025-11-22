@@ -1,7 +1,5 @@
 # 📂 ✨ Society Maintenance Web App
 
-# Society Maintenance Web App
-
 Lightweight React + TypeScript single-page app built with Vite, using Firebase Authentication and Firestore for data and hosting. UI is implemented with MUI (Material UI).
 
 Purpose: manage monthly maintenance, payments, notices and basic finance for small housing societies. The app has two roles: `admin` and `resident`.
