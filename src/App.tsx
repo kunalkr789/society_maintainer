@@ -1,35 +1,42 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Box, CircularProgress } from "@mui/material";
 import AppShell from "@/components/AppShell";
-
-import Login from "@/pages/auth/Login";
-import ForcePasswordChange from "@/pages/auth/ForcePasswordChange";
-
-import AdminDashboard from "@/pages/admin/Dashboard";
-import VerifyPayments from "@/pages/admin/VerifyPayments";
-import AdminDuesHistory from "@/pages/admin/DuesHistory";
-import Finance from "@/pages/admin/Finance";
-import AddNotice from "@/pages/admin/AddNotice";
-
-import ResidentDashboard from "@/pages/resident/Dashboard";
-import Dues from "@/pages/resident/Dues";
-import DuesHistory from "@/pages/resident/DuesHistory";
-import Notices from "@/pages/resident/Notices";
-import MarkPaid from "@/pages/resident/MarkPaid";
-import Profile from "@/pages/settings/Profile";
-
 import {
   RequireAuth,
   RequireAdmin,
   RequireResident,
   RoleRedirect,
 } from "@/auth/guards";
-import CreateMonth from "./pages/admin/CreateMonth";
-import Contacts from "./pages/resident/Contacts";
-import Ledger from "./pages/admin/Ledger";
-import ResidentLedger from "./pages/resident/Ledger";
+
+// Each page is its own chunk, so residents never download admin-only screens (or the PDF libraries)
+const Login = lazy(() => import("@/pages/auth/Login"));
+const ForcePasswordChange = lazy(() => import("@/pages/auth/ForcePasswordChange"));
+const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
+const VerifyPayments = lazy(() => import("@/pages/admin/VerifyPayments"));
+const AdminDuesHistory = lazy(() => import("@/pages/admin/DuesHistory"));
+const Finance = lazy(() => import("@/pages/admin/Finance"));
+const AddNotice = lazy(() => import("@/pages/admin/AddNotice"));
+const ResidentDashboard = lazy(() => import("@/pages/resident/Dashboard"));
+const Dues = lazy(() => import("@/pages/resident/Dues"));
+const DuesHistory = lazy(() => import("@/pages/resident/DuesHistory"));
+const Notices = lazy(() => import("@/pages/resident/Notices"));
+const MarkPaid = lazy(() => import("@/pages/resident/MarkPaid"));
+const Profile = lazy(() => import("@/pages/settings/Profile"));
+const CreateMonth = lazy(() => import("@/pages/admin/CreateMonth"));
+const Contacts = lazy(() => import("@/pages/resident/Contacts"));
+const Ledger = lazy(() => import("@/pages/admin/Ledger"));
+const ResidentLedger = lazy(() => import("@/pages/resident/Ledger"));
+
+const PageFallback = () => (
+  <Box sx={{ display: "grid", placeItems: "center", py: 10 }} role="status" aria-label="Loading">
+    <CircularProgress size={28} />
+  </Box>
+);
 
 export default function App() {
   return (
+    <Suspense fallback={<PageFallback />}>
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
@@ -86,5 +93,6 @@ export default function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 }

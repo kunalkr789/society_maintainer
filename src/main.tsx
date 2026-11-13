@@ -1,4 +1,5 @@
 import React from 'react'
+import '@fontsource-variable/inter'
 import ReactDOM from 'react-dom/client'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { BrowserRouter } from 'react-router-dom'

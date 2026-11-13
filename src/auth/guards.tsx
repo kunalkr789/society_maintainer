@@ -1,9 +1,14 @@
 import * as React from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Box, CircularProgress } from '@mui/material'
 import { useAuth } from './AuthProvider'
 
 function Splash() {
-  return <div style={{display:'grid',placeItems:'center',minHeight:'60vh'}}>Loading…</div>
+  return (
+    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: '100dvh' }} role="status" aria-label="Loading">
+      <CircularProgress size={32} />
+    </Box>
+  )
 }
 
 export function RequireAuth() {
