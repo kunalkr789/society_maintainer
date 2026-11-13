@@ -52,6 +52,7 @@ export const adminNav: NavItem[] = [
   { label: "Ledger", to: () => "/admin/ledger", match: (p) => p === "/admin/ledger", icon: <MenuBookRoundedIcon /> },
   { label: "Helpdesk", to: () => "/admin/helpdesk", match: (p) => p === "/admin/helpdesk", icon: <SupportAgentRoundedIcon />, mobile: true },
   { label: "Notices", title: "Add Notice", to: () => "/admin/notices/add", match: (p) => p.startsWith("/admin/notices") || p === "/notices", icon: <CampaignRoundedIcon /> },
+  { label: "Contacts", to: () => "/admin/contacts", match: (p) => p === "/admin/contacts", icon: <ContactPhoneRoundedIcon /> },
 ];
 
 /** Routes that aren't nav destinations but still need a header title. */

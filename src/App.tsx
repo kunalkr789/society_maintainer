@@ -90,6 +90,7 @@ export default function App() {
             <Route path="/settings/profile" element={<Profile />} />
             <Route path="/admin/ledger" element={<Ledger />} />
             <Route path="/admin/helpdesk" element={<AdminHelpdesk />} />
+            <Route path="/admin/contacts" element={<Contacts editable />} />
           </Route>
         </Route>
       </Route>
