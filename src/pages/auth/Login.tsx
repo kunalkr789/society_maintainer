@@ -5,7 +5,7 @@ import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 import { useAuth } from "@/auth/AuthProvider";
 import { useLocation, useNavigate } from "react-router-dom";
-import { SOCIETY_NAME } from "@/components/TopBar";
+import { SOCIETY_NAME } from "@/config";
 
 /** Firebase auth codes → messages a resident can act on. */
 function friendlyError(e: unknown): string {

@@ -5,15 +5,21 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
-
-export const SOCIETY_NAME = "Urmila Kunj";
+import { SOCIETY_NAME } from "@/config";
 
 export default function TopBar() {
   const nav = useNavigate();
   const { profile, claims, logout } = useAuth();
   const [anchor, setAnchor] = React.useState<HTMLElement | null>(null);
   const isAdmin = claims?.role === "admin";
-  const initials = (profile?.name || profile?.flatNo || "?").trim().slice(0, 2).toUpperCase();
+  const initials =
+    (profile?.name ?? "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase() || (profile?.flatNo ?? "?").slice(0, 3);
 
   return (
     <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
