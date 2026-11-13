@@ -4,6 +4,10 @@ Lightweight React + TypeScript single-page app built with Vite, using Firebase A
 
 Purpose: manage monthly maintenance, payments, notices, contacts and basic finance for small housing societies. The app has two roles: `admin` and `resident`.
 
+**Residents** see what they owe at a glance, mark payments, read notices, raise **Helpdesk** requests and call or WhatsApp society contacts. **Admins** track collection progress, verify payments, manage finance and the ledger, resolve Helpdesk requests and maintain the **Contacts** directory.
+
+> **Before deploying the Helpdesk and Contacts features**, publish the Firestore rules in [`docs/firestore-rules.md`](docs/firestore-rules.md) from the Firebase console. The deploy workflow ships hosting only.
+
 ---
 
 ## Quick start (development)
@@ -71,11 +75,14 @@ Use `.env.example` as a template for local development.
 - `src/firebase.ts` — Firebase initialization (Auth + Firestore).
 - `src/auth/AuthProvider.tsx` — auth state, profile loading, change password flow.
 - `src/auth/guards.tsx` — route guards: `RequireAuth`, `RequireAdmin`, `RequireResident`, `RoleRedirect`.
-- `src/store.tsx` — central app context: live `onSnapshot` listeners and explicit `load*` functions; preferred place to add new Firestore interactions.
-- `src/Bootstrap.tsx` — preloads data after login via loaders (dues, expenses, notices, payments, profiles).
-- `src/App.tsx` — route definitions and role-based areas.
+- `src/store.tsx` — central app context: live `onSnapshot` listeners and explicit `load*` functions for dues, payments, notices, expenses and profiles.
+- `src/features/*` — self-contained features with their own Firestore hooks: `helpdesk` (`complaints`) and `contacts`.
+- `src/nav.tsx` — the single navigation model behind the sidebar, mobile bottom bar and page titles.
+- `src/hooks/useAllPayments.ts` — loads every month's payments and reports when they're ready.
+- `src/config.ts` — society name and flat list.
+- `src/App.tsx` — route definitions and role-based areas (each page is lazy-loaded).
 
-Firestore collections used by the app: `dues`, `payments`, `notices`, `expenses`, `profiles`.
+Firestore collections used by the app: `dues`, `payments`, `notices`, `expenses`, `profiles`, `complaints`, `contacts`.
 
 ---
 

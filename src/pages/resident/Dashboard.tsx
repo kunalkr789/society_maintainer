@@ -1,278 +1,161 @@
 import * as React from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Stack,
-  Chip,
-} from "@mui/material";
+import { Alert, Box, Button, Card, CardActionArea, CardContent, Chip, Grid, Skeleton, Stack, Typography } from "@mui/material";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import ContactPhoneRoundedIcon from "@mui/icons-material/ContactPhoneRounded";
+import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/store";
-import { fmt } from "@/utils/date";
-import NoticeBanner from "@/components/NoticeBanner";
+import { useAllPayments } from "@/hooks/useAllPayments";
+import StatCard from "@/components/StatCard";
+import { daysUntil, inr, monthLabel, shortDate } from "@/utils/format";
+
+type MonthStatus = { id: string; amount: number; dueDate: string; paid: boolean; verified: boolean; paidOn: unknown };
 
 export default function Dashboard() {
-  const { db, me, loadPayments } = useApp();
+  const { db, me } = useApp();
   const nav = useNavigate();
+  const { ready, hasMonths } = useAllPayments();
 
-  // Latest month (dues ordered desc via store)
-  const monthId = db.dues?.[0]?.id;
-
-  // Ensure we have this month's payments for summary
-  React.useEffect(() => {
-    if (monthId) loadPayments(monthId);
-  }, [monthId, loadPayments]);
-
-  // Resident's per-month list with payment status
-  const months = db.dues.map((m) => {
-    const pay = (db.payments[m.id] ?? []).find(
-      (p: any) => p.flatNo === me?.flatNo
-    );
-    return {
-      id: m.id,
-      amount: m.amount,
-      dueDate: m.dueDate,
-      paid: !!pay?.paid,
-      verified: !!pay?.verified,
-      refNo: pay?.refNo ?? null,
-      paidOn: pay?.updatedAt?.seconds
-        ? new Date(pay.updatedAt.seconds * 1000).toLocaleString()
-        : pay?.updatedAt
-        ? new Date(pay.updatedAt).toLocaleString()
-        : null,
-    };
+  const months: MonthStatus[] = db.dues.map((m) => {
+    const pay = (db.payments[m.id] ?? []).find((p) => p.flatNo === me?.flatNo);
+    return { id: m.id, amount: m.amount, dueDate: m.dueDate, paid: !!pay?.paid, verified: !!pay?.verified, paidOn: pay?.updatedAt };
   });
+  // oldest first, so residents clear the earliest dues first
+  const unpaid = months.filter((m) => !m.paid).reverse();
+  const awaiting = months.filter((m) => m.paid && !m.verified);
+  const totalDue = unpaid.reduce((s, m) => s + Number(m.amount || 0), 0);
+  const next = unpaid[0];
+  const nextDays = next ? daysUntil(next.dueDate) : null;
 
-  const unpaid = months.filter((m) => !m.paid);
-  const paid = months.filter((m) => m.paid);
+  // society snapshot for the latest month (verified collections vs expenses)
+  const latestId = db.dues[0]?.id;
+  const latestAmount = db.dues[0]?.amount ?? 0;
+  const collected = (db.payments[latestId] ?? []).filter((p) => p.paid && p.verified).reduce((s, p) => s + Number(p.amount ?? latestAmount), 0);
+  const spent = db.expenses.filter((e) => String(e.date ?? "").startsWith(latestId ?? "—")).reduce((s, e) => s + Number(e.amount || 0), 0);
 
-  // --- FIXED: Resident summary (read-only) ---
-  // Use month dues amount as fallback if payment.amount is missing.
-  // Toggle this to true if you want to count paid-but-unverified too.
-  const INCLUDE_UNVERIFIED = false;
-
-  const monthObj = db.dues.find((d) => d.id === monthId);
-  const perPaymentAmount = (p: any) =>
-    Number(p?.amount ?? monthObj?.amount ?? 0);
-
-  const paymentsThisMonth = (db.payments[monthId] ?? []).filter((p: any) =>
-    INCLUDE_UNVERIFIED ? p.paid : p.paid && p.verified
-  );
-
-  const totalCollections = paymentsThisMonth.reduce(
-    (sum: number, p: any) => sum + perPaymentAmount(p),
-    0
-  );
-
-  const monthExpenses = (db.expenses ?? [])
-    .filter((e: any) => String(e.date ?? "").startsWith(monthId || ""))
-    .reduce((sum: number, e: any) => sum + Number(e.amount ?? 0), 0);
-
-  // Balance here = collections - expenses (resident view)
-  const balance = totalCollections - monthExpenses;
-
-  const latest = db.notices?.[0];
+  const pinned = db.notices.find((n) => n.pinned) ?? db.notices[0];
 
   return (
     <Box sx={{ px: { xs: 2, md: 3 } }}>
-      <Stack spacing={2}>
-
-        {/* Outstanding Dues (all unpaid months) */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6">Outstanding Dues</Typography>
-            {unpaid.length === 0 ? (
-              <Typography color="success.main" sx={{ mt: 1 }}>
-                🎉 You're all caught up! No unpaid months.
-              </Typography>
-            ) : (
-              <Stack spacing={1} sx={{ mt: 1 }}>
-                {unpaid.map((m) => (
-                  <Card key={m.id} variant="outlined">
-                    <CardContent
-                      sx={{
-                        display: "flex",
-                        gap: 2,
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <Typography sx={{ flex: 1, fontWeight: 700 }}>
-                        {m.id}
-                      </Typography>
-                      <Typography color="text.secondary">₹{m.amount}</Typography>
-                      <Typography color="text.secondary">
-                        Due by {fmt(m.dueDate)}
-                      </Typography>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => nav(`/dues/${m.id}/mark-paid`)}
-                      >
-                        Mark Paid
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Stack>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Latest Notice */}
-        <Card>
-          <CardContent>
-            {latest && (
-              <NoticeBanner
-                title={latest.title}
-                body={latest.body}
-                createdAt={latest.createdAt}
-                accent="secondary"
-              />
-            )}
-            <Button
-              sx={{ width: "fit-content", mt: 1 }}
-              variant="text"
-              onClick={() => nav("/notices")}
-            >
-              View All Notices
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Recently Paid (last few) */}
-        {paid.length > 0 && (
-          <Card>
+      <Stack spacing={2.5}>
+        {/* What do I owe? */}
+        {!hasMonths ? (
+          <Alert severity="info">No maintenance months have been created yet.</Alert>
+        ) : !ready ? (
+          <Skeleton variant="rounded" height={148} />
+        ) : unpaid.length === 0 ? (
+          <Card sx={{ bgcolor: "success.main", color: "#fff", borderColor: "success.main" }}>
             <CardContent>
-              <Typography variant="h6">Recently Paid</Typography>
-              <Stack spacing={1} sx={{ mt: 1 }}>
-                {paid.slice(0, 4).map((m) => (
-                  <Card key={m.id} variant="outlined">
-                    <CardContent
-                      sx={{
-                        display: "flex",
-                        gap: 2,
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <Typography sx={{ flex: 1, fontWeight: 700 }}>
-                        {m.id}
-                      </Typography>
-                      <Typography color="text.secondary">₹{m.amount}</Typography>
-                      <Typography color="text.secondary">
-                        Paid on {m.paidOn ?? "—"}
-                      </Typography>
-                      {m.verified ? (
-                        <Chip size="small" color="success" label="Verified" />
-                      ) : (
-                        <Chip size="small" color="warning" label="Pending" />
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+              <Stack direction="row" spacing={2} alignItems="center">
+                <CheckCircleRoundedIcon sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="h6">You’re all caught up</Typography>
+                  <Typography sx={{ opacity: 0.9 }}>No maintenance dues pending for Flat {me?.flatNo}.</Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card sx={{ borderColor: nextDays !== null && nextDays < 0 ? "error.main" : "divider" }}>
+            <CardContent>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ sm: "center" }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Amount due · {unpaid.length} month{unpaid.length > 1 ? "s" : ""}
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontVariantNumeric: "tabular-nums" }}>
+                    {inr(totalDue)}
+                  </Typography>
+                  <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
+                    {unpaid.map((m) => (
+                      <Chip key={m.id} size="small" label={monthLabel(m.id)} variant="outlined" />
+                    ))}
+                  </Stack>
+                  {nextDays !== null && (
+                    <Typography variant="body2" sx={{ mt: 1.25 }} color={nextDays < 0 ? "error.main" : nextDays <= 3 ? "warning.main" : "text.secondary"}>
+                      {nextDays < 0 ? `${monthLabel(next.id)} is overdue by ${-nextDays} day${nextDays === -1 ? "" : "s"}` : nextDays === 0 ? `${monthLabel(next.id)} is due today` : `${monthLabel(next.id)} is due on ${shortDate(next.dueDate)}`}
+                    </Typography>
+                  )}
+                </Box>
+                <Button variant="contained" size="large" onClick={() => nav(`/dues/${next.id}/mark-paid`)} sx={{ alignSelf: { xs: "stretch", sm: "center" } }}>
+                  I’ve paid {monthLabel(next.id)}
+                </Button>
               </Stack>
             </CardContent>
           </Card>
         )}
 
-        {/* === Monthly Summary (read-only) === */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6">This Month at a Glance</Typography>
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              useFlexGap
-              flexWrap="wrap"
-              sx={{ columnGap: { xs: 2, md: 4 }, rowGap: { xs: 1.5 }, mt: 1 }}
-            >
-              <Summary
-                label="This month’s total collections"
-                value={totalCollections}
-              />
-              <Summary
-                label="This month’s total expenses"
-                value={monthExpenses}
-              />
-              {/* <Summary
-                label="Balance (collections − expenses)"
-                value={balance}
-                large
-              /> */}
-            </Stack>
+        {awaiting.length > 0 && (
+          <Alert severity="info" variant="outlined">
+            Waiting for the admin to verify your payment for {awaiting.map((m) => monthLabel(m.id)).join(", ")}.
+          </Alert>
+        )}
 
-            <Stack direction="row" sx={{ mt: 2 }}>
-              <Button variant="outlined" onClick={() => nav("/ledger")}>
-                View full ledger
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+        {/* Latest notice */}
+        {pinned && (
+          <Card>
+            <CardActionArea onClick={() => nav("/notices")}>
+              <CardContent>
+                <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                  <CampaignRoundedIcon color="secondary" />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="subtitle1" noWrap>
+                        {pinned.title}
+                      </Typography>
+                      {pinned.pinned && <Chip size="small" label="Pinned" color="secondary" variant="outlined" />}
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary" sx={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", mt: 0.25 }}>
+                      {pinned.body}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        )}
 
-        {/* Quick Actions */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6">Quick Actions</Typography>
-            <Stack
-              direction="row"
-              useFlexGap
-              flexWrap="wrap"
-              sx={{
-                columnGap: { xs: 1, sm: 2, md: 3 },
-                rowGap: { xs: 1, sm: 1.5, md: 2 },
-              }}
-            >
-              <Button sx={{ m: 1 }} variant="outlined" onClick={() => nav("/dues")}>
-                Dues
-              </Button>
-              <Button
-                sx={{ m: 1 }}
-                variant="outlined"
-                onClick={() => nav("/dues/history")}
-              >
-                Dues History
-              </Button>
-              <Button
-                sx={{ m: 1 }}
-                variant="outlined"
-                onClick={() => nav("/contacts")}
-              >
-                Contacts
-              </Button>
-              <Button
-                sx={{ m: 1 }}
-                variant="outlined"
-                onClick={() => nav("/settings/profile")}
-              >
-                My Profile
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+        {/* Society this month */}
+        {latestId && (
+          <Box>
+            <Typography variant="overline" color="text.secondary">
+              Society · {monthLabel(latestId)}
+            </Typography>
+            <Grid container spacing={2} sx={{ mt: 0 }}>
+              <Grid item xs={6}>
+                <StatCard label="Collected" value={inr(collected)} hint="verified payments" tone="success" />
+              </Grid>
+              <Grid item xs={6}>
+                <StatCard label="Spent" value={inr(spent)} hint="recorded expenses" tone="warning" />
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
+        {/* Shortcuts */}
+        <Grid container spacing={1.5}>
+          {[
+            { label: "My dues", to: "/dues", icon: <ReceiptLongRoundedIcon /> },
+            { label: "Payment history", to: "/dues/history", icon: <HistoryRoundedIcon /> },
+            { label: "Helpdesk", to: "/helpdesk", icon: <SupportAgentRoundedIcon /> },
+            { label: "Contacts", to: "/contacts", icon: <ContactPhoneRoundedIcon /> },
+          ].map((s) => (
+            <Grid item xs={6} sm={3} key={s.to}>
+              <Card>
+                <CardActionArea onClick={() => nav(s.to)} sx={{ p: 2 }}>
+                  <Stack spacing={1} alignItems="flex-start">
+                    <Box sx={{ color: "primary.main" }}>{s.icon}</Box>
+                    <Typography variant="subtitle2">{s.label}</Typography>
+                  </Stack>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Stack>
     </Box>
-  );
-}
-
-function Summary({
-  label,
-  value,
-  large = false,
-}: {
-  label: string;
-  value: number;
-  large?: boolean;
-}) {
-  return (
-    <Stack spacing={0.25} sx={{ minWidth: { xs: "auto", sm: 220 } }}>
-      <Typography variant="body2" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant={large ? "h5" : "h6"}>
-        ₹{Number(value).toLocaleString("en-IN")}
-      </Typography>
-    </Stack>
   );
 }

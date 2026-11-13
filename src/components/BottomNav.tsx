@@ -1,46 +1,72 @@
-import * as React from 'react'
-import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material'
-import HomeIcon from '@mui/icons-material/Home'
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
-import HistoryIcon from '@mui/icons-material/History'
-import CampaignIcon from '@mui/icons-material/Campaign'
-import PersonIcon from '@mui/icons-material/Person'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { ContactEmergency } from '@mui/icons-material'
+import * as React from "react";
+import { BottomNavigation, BottomNavigationAction, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Paper, Typography } from "@mui/material";
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/auth/AuthProvider";
+import { useApp } from "@/store";
+import { navFor } from "@/nav";
 
-type TabValue = 'home' | 'dues' | 'dues-history' | 'notices' | 'contacts'
-
+/** Mobile bottom bar for both roles: four pinned destinations plus a "More" sheet. */
 export default function BottomNav() {
-  const nav = useNavigate()
-  const loc = useLocation()
+  const nav = useNavigate();
+  const loc = useLocation();
+  const { claims } = useAuth();
+  const { db } = useApp();
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const items = navFor(claims?.role === "admin");
+  const pinned = items.filter((i) => i.mobile);
+  const rest = items.filter((i) => !i.mobile);
+  const latestMonth = db.dues?.[0]?.id;
 
-  const tabs = React.useMemo(() => ([
-    { value: 'home' as const,         to: '/dashboard',     match: (p:string)=> p === '/dashboard' },
-    { value: 'dues' as const,         to: '/dues',          match: (p:string)=> p === '/dues' || p.includes('/dues/') },
-    { value: 'dues-history' as const, to: '/dues/history',  match: (p:string)=> p.startsWith('/dues/history') },
-    { value: 'notices' as const,      to: '/notices',       match: (p:string)=> p.startsWith('/notices') },
-    { value: 'contacts' as const,      to: '/contacts', match: (p:string)=> p.startsWith('/contacts') },
-  ]), [])
-
-  const active: TabValue =
-    (tabs.find(t => t.match(loc.pathname))?.value) ?? 'home'
+  const activePinned = pinned.findIndex((i) => i.match(loc.pathname));
+  const value = activePinned >= 0 ? activePinned : rest.some((i) => i.match(loc.pathname)) ? "more" : false;
 
   return (
-    <Paper sx={{ position:'fixed', bottom:0, left:0, right:0, display:{ xs:'block', md:'none' }, zIndex: 1200 }} elevation={3}>
-      <BottomNavigation
-        value={active}
-        onChange={(_, newValue: TabValue) => {
-          const t = tabs.find(x => x.value === newValue)
-          if (t) nav(t.to)
+    <>
+      <Paper
+        elevation={0}
+        sx={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: { xs: "block", md: "none" },
+          zIndex: (t) => t.zIndex.appBar,
+          borderTop: 1,
+          borderColor: "divider",
+          borderRadius: 0,
+          pb: "env(safe-area-inset-bottom)",
         }}
-        showLabels
       >
-        <BottomNavigationAction value="home"         label="Home"    icon={<HomeIcon />} />
-        <BottomNavigationAction value="dues"         label="Dues"    icon={<ReceiptLongIcon />} />
-        <BottomNavigationAction value="dues-history" label="History" icon={<HistoryIcon />} />
-        <BottomNavigationAction value="notices"      label="Notices" icon={<CampaignIcon />} />
-        <BottomNavigationAction value="contacts"      label="Contacts" icon={<ContactEmergency />} />
-      </BottomNavigation>
-    </Paper>
-  )
+        <BottomNavigation value={value} showLabels>
+          {pinned.map((i, idx) => (
+            <BottomNavigationAction key={i.label} value={idx} label={i.label} icon={i.icon} onClick={() => nav(i.to(latestMonth))} />
+          ))}
+          {rest.length > 0 && <BottomNavigationAction value="more" label="More" icon={<MoreHorizRoundedIcon />} onClick={() => setMoreOpen(true)} />}
+        </BottomNavigation>
+      </Paper>
+
+      <Drawer anchor="bottom" open={moreOpen} onClose={() => setMoreOpen(false)} PaperProps={{ sx: { borderTopLeftRadius: 20, borderTopRightRadius: 20, pb: "calc(16px + env(safe-area-inset-bottom))" } }}>
+        <Typography variant="overline" color="text.secondary" sx={{ px: 3, pt: 2 }}>
+          More
+        </Typography>
+        <List>
+          {rest.map((i) => (
+            <ListItemButton
+              key={i.label}
+              selected={i.match(loc.pathname)}
+              onClick={() => {
+                setMoreOpen(false);
+                nav(i.to(latestMonth));
+              }}
+              sx={{ py: 1.25 }}
+            >
+              <ListItemIcon>{i.icon}</ListItemIcon>
+              <ListItemText primary={i.label} />
+            </ListItemButton>
+          ))}
+        </List>
+      </Drawer>
+    </>
+  );
 }

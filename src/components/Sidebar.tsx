@@ -1,42 +1,51 @@
-import { List, ListItemButton, ListItemText, Paper } from '@mui/material'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/auth/AuthProvider'
+import { Box, List, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/auth/AuthProvider";
+import { useApp } from "@/store";
+import { navFor } from "@/nav";
+
+export const SIDEBAR_WIDTH = 248;
 
 export default function Sidebar() {
-  const nav = useNavigate()
-  const loc = useLocation()
-  const { claims } = useAuth()
-  const isAdmin = claims?.role === 'admin'
-
-  const residentItems = [
-    ['Home','/'],
-    ['Notices','/notices'],
-    ['Dues','/dues'],
-    ['Dues History','/dues/history'],
-    // ['Complaints','/complaints'],
-    ['Contacts','/contacts'],
-  ]
-  const adminItems = [
-    ['Dashboard','/admin'],
-    ['Create Month','/admin/dues/create'],
-    ['Verify Payments','/admin/dues/'+new Date().toISOString().slice(0,7)+'/verify'],
-    ['Dues History','/admin/dues/history'],
-    ['Finance','/admin/finance'],
-    ['Ledger','/admin/ledger'],
-    ['Add Notice','/admin/notices/add'],
-  ]
-
-  const items = isAdmin ? adminItems : residentItems
+  const nav = useNavigate();
+  const loc = useLocation();
+  const { claims } = useAuth();
+  const { db } = useApp();
+  const isAdmin = claims?.role === "admin";
+  const latestMonth = db.dues?.[0]?.id;
 
   return (
-    <Paper elevation={0} sx={{ width: 232, height:'100vh', borderRight: '1px solid #E4E7EC', display:{ xs:'none', md:'block' }, position:'fixed', top:64, left:0 }}>
-      <List>
-        {items.map(([label, path]) => (
-          <ListItemButton key={path} selected={loc.pathname===path} onClick={() => nav(path)}>
-            <ListItemText primary={label} />
-          </ListItemButton>
-        ))}
+    <Box
+      component="nav"
+      aria-label="Main"
+      sx={{
+        display: { xs: "none", md: "block" },
+        position: "fixed",
+        top: 64,
+        left: 0,
+        bottom: 0,
+        width: SIDEBAR_WIDTH,
+        borderRight: 1,
+        borderColor: "divider",
+        bgcolor: "background.paper",
+        overflowY: "auto",
+        py: 2,
+      }}
+    >
+      <Typography variant="overline" color="text.secondary" sx={{ px: 3 }}>
+        {isAdmin ? "Manage" : "My home"}
+      </Typography>
+      <List dense>
+        {navFor(isAdmin).map((item) => {
+          const selected = item.match(loc.pathname);
+          return (
+            <ListItemButton key={item.label} selected={selected} onClick={() => nav(item.to(latestMonth))} aria-current={selected ? "page" : undefined} sx={{ my: 0.25, py: 1 }}>
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: selected ? 700 : 500 }} />
+            </ListItemButton>
+          );
+        })}
       </List>
-    </Paper>
-  )
+    </Box>
+  );
 }
