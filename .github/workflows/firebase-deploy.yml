@@ -50,7 +50,10 @@ jobs:
           fi
 
           if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            # firebase-tools prefers FIREBASE_TOKEN over GOOGLE_APPLICATION_CREDENTIALS, so drop it
+            unset FIREBASE_TOKEN
             npx firebase-tools@latest deploy --only hosting --project "$PROJECT_ID"
+            rm -f /tmp/sa.json
           else
             if [ -z "$FIREBASE_TOKEN" ]; then
               echo "FIREBASE_TOKEN not set and no service account provided. Add FIREBASE_TOKEN or FIREBASE_SERVICE_ACCOUNT secret.";
