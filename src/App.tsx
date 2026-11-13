@@ -27,6 +27,8 @@ const CreateMonth = lazy(() => import("@/pages/admin/CreateMonth"));
 const Contacts = lazy(() => import("@/pages/resident/Contacts"));
 const Ledger = lazy(() => import("@/pages/admin/Ledger"));
 const ResidentLedger = lazy(() => import("@/pages/resident/Ledger"));
+const Helpdesk = lazy(() => import("@/pages/resident/Helpdesk"));
+const AdminHelpdesk = lazy(() => import("@/pages/admin/Helpdesk"));
 
 const PageFallback = () => (
   <Box sx={{ display: "grid", placeItems: "center", py: 10 }} role="status" aria-label="Loading">
@@ -66,6 +68,7 @@ export default function App() {
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/settings/profile" element={<Profile />} />
             <Route path="/ledger" element={<ResidentLedger />} />
+            <Route path="/helpdesk" element={<Helpdesk />} />
           </Route>
         </Route>
       </Route>
@@ -86,6 +89,7 @@ export default function App() {
             <Route path="/admin/notices/add" element={<AddNotice />} />
             <Route path="/settings/profile" element={<Profile />} />
             <Route path="/admin/ledger" element={<Ledger />} />
+            <Route path="/admin/helpdesk" element={<AdminHelpdesk />} />
           </Route>
         </Route>
       </Route>

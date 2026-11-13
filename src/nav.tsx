@@ -5,6 +5,7 @@ import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
 import ContactPhoneRoundedIcon from "@mui/icons-material/ContactPhoneRounded";
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
+import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import AccountBalanceRoundedIcon from "@mui/icons-material/AccountBalanceRounded";
 import AddCircleRoundedIcon from "@mui/icons-material/AddCircleRounded";
@@ -28,9 +29,10 @@ export type NavItem = {
 export const residentNav: NavItem[] = [
   { label: "Home", title: "Dashboard", to: () => "/dashboard", match: (p) => p === "/dashboard", icon: <DashboardRoundedIcon />, mobile: true },
   { label: "Dues", to: () => "/dues", match: (p) => p === "/dues" || /^\/dues\/[^/]+\/mark-paid$/.test(p), icon: <ReceiptLongRoundedIcon />, mobile: true },
-  { label: "History", title: "Dues History", to: () => "/dues/history", match: (p) => p === "/dues/history", icon: <HistoryRoundedIcon />, mobile: true },
+  { label: "History", title: "Dues History", to: () => "/dues/history", match: (p) => p === "/dues/history", icon: <HistoryRoundedIcon /> },
   { label: "Ledger", to: () => "/ledger", match: (p) => p === "/ledger", icon: <MenuBookRoundedIcon /> },
   { label: "Notices", to: () => "/notices", match: (p) => p === "/notices", icon: <CampaignRoundedIcon />, mobile: true },
+  { label: "Helpdesk", to: () => "/helpdesk", match: (p) => p === "/helpdesk", icon: <SupportAgentRoundedIcon />, mobile: true },
   { label: "Contacts", to: () => "/contacts", match: (p) => p === "/contacts", icon: <ContactPhoneRoundedIcon /> },
 ];
 
@@ -47,7 +49,8 @@ export const adminNav: NavItem[] = [
   { label: "Create Month", to: () => "/admin/dues/create", match: (p) => p === "/admin/dues/create", icon: <AddCircleRoundedIcon /> },
   { label: "Dues History", to: () => "/admin/dues/history", match: (p) => p === "/admin/dues/history", icon: <HistoryRoundedIcon /> },
   { label: "Finance", to: () => "/admin/finance", match: (p) => p === "/admin/finance", icon: <AccountBalanceRoundedIcon />, mobile: true },
-  { label: "Ledger", to: () => "/admin/ledger", match: (p) => p === "/admin/ledger", icon: <MenuBookRoundedIcon />, mobile: true },
+  { label: "Ledger", to: () => "/admin/ledger", match: (p) => p === "/admin/ledger", icon: <MenuBookRoundedIcon /> },
+  { label: "Helpdesk", to: () => "/admin/helpdesk", match: (p) => p === "/admin/helpdesk", icon: <SupportAgentRoundedIcon />, mobile: true },
   { label: "Notices", title: "Add Notice", to: () => "/admin/notices/add", match: (p) => p.startsWith("/admin/notices") || p === "/notices", icon: <CampaignRoundedIcon /> },
 ];
 

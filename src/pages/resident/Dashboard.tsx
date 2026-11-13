@@ -3,8 +3,8 @@ import { Alert, Box, Button, Card, CardActionArea, CardContent, Chip, Grid, Skel
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
-import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
 import ContactPhoneRoundedIcon from "@mui/icons-material/ContactPhoneRounded";
+import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/store";
@@ -140,7 +140,7 @@ export default function Dashboard() {
           {[
             { label: "My dues", to: "/dues", icon: <ReceiptLongRoundedIcon /> },
             { label: "Payment history", to: "/dues/history", icon: <HistoryRoundedIcon /> },
-            { label: "Society ledger", to: "/ledger", icon: <MenuBookRoundedIcon /> },
+            { label: "Helpdesk", to: "/helpdesk", icon: <SupportAgentRoundedIcon /> },
             { label: "Contacts", to: "/contacts", icon: <ContactPhoneRoundedIcon /> },
           ].map((s) => (
             <Grid item xs={6} sm={3} key={s.to}>
